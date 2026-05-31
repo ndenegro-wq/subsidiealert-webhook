@@ -15,8 +15,7 @@ def stuur_mail(aan, onderwerp, tekst):
         msg["Subject"] = onderwerp
         msg["From"] = SMTP_USER
         msg["To"] = aan
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
-            s.starttls()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as s:
             s.login(SMTP_USER, SMTP_PASS)
             s.sendmail(SMTP_USER, aan, msg.as_string())
         print(f"Mail verstuurd naar {aan}")
