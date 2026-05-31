@@ -1,9 +1,4 @@
-"""
-SubsidieAlert Webhook API
-Ontvangt aanmeldingen van de website en stuurt een notificatiemail
-"""
-
-import os, json, smtplib
+import os, smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify
@@ -14,93 +9,64 @@ SMTP_USER = os.environ.get("SMTP_USER", "subsidiescan.alerts@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "febgoqotranvirxj")
 NOTIF_EMAIL = os.environ.get("NOTIF_EMAIL", "subsidiescan.alerts@gmail.com")
 
-def stuur_notificatie(naam, email, pakket):
+def stuur_mail(aan, onderwerp, tekst):
     try:
-        tekst = f"""Nieuwe aanmelding op SubsidieAlert!
-
-Naam:   {naam}
-Email:  {email}
-Pakket: {pakket}
-Datum:  {datetime.now().strftime('%d-%m-%Y %H:%M')}
-
-Voeg deze persoon toe aan abonnees.json als dat nog niet automatisch is gebeurd.
-"""
         msg = MIMEText(tekst, "plain", "utf-8")
-        msg["Subject"] = f"Nieuwe aanmelding SubsidieAlert: {naam}"
+        msg["Subject"] = onderwerp
         msg["From"] = SMTP_USER
-        msg["To"] = NOTIF_EMAIL
-
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+        msg["To"] = aan
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
             s.starttls()
             s.login(SMTP_USER, SMTP_PASS)
-            s.sendmail(SMTP_USER, NOTIF_EMAIL, msg.as_string())
-        print(f"Notificatie verstuurd: {naam} <{email}>")
+            s.sendmail(SMTP_USER, aan, msg.as_string())
+        print(f"Mail verstuurd naar {aan}")
     except Exception as e:
-        print(f"Notificatie mislukt: {e}")
-
-def stuur_welkomstmail(naam, email, pakket):
-    try:
-        tekst = f"""Hallo {naam},
-
-Welkom bij SubsidieAlert! Je gratis proefperiode van 14 dagen is gestart.
-
-Elke ochtend voor 08:00 ontvang je een overzicht van nieuwe subsidies en aanbestedingen in de duurzaamheidssector.
-
-Pakket: {pakket.upper()}
-- Basis: RVO subsidies + TenderNed aanbestedingen
-- Pro: alle bronnen + gemeenten + sectorfilter
-
-Vragen? Stuur een reply op deze mail.
-
-Groet,
-Nick
-SubsidieAlert
-www.subsidiealert.nl
-"""
-        msg = MIMEText(tekst, "plain", "utf-8")
-        msg["Subject"] = f"Welkom bij SubsidieAlert, {naam.split()[0]}!"
-        msg["From"] = SMTP_USER
-        msg["To"] = email
-        msg["Reply-To"] = NOTIF_EMAIL
-
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
-            s.starttls()
-            s.login(SMTP_USER, SMTP_PASS)
-            s.sendmail(SMTP_USER, email, msg.as_string())
-        print(f"Welkomstmail verstuurd naar {email}")
-    except Exception as e:
-        print(f"Welkomstmail mislukt: {e}")
+        print(f"Mail fout: {e}")
 
 @app.after_request
 def cors(resp):
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
     return resp
 
-@app.route("/aanmelding", methods=["POST", "OPTIONS"])
+@app.route("/", methods=["GET"])
+def home():
+    return "SubsidieAlert Webhook API actief"
+
+@app.route("/aanmelding", methods=["GET", "POST", "OPTIONS"])
 def aanmelding():
     if request.method == "OPTIONS":
         return jsonify({"ok": True}), 200
 
+    if request.method == "GET":
+        return jsonify({"ok": True, "info": "POST hier een aanmelding"})
+
     data = request.get_json(silent=True) or {}
-    naam  = data.get("naam", "").strip()
-    email = data.get("email", "").strip()
+    naam   = data.get("naam", "").strip()
+    email  = data.get("email", "").strip()
     pakket = data.get("pakket", "basis").strip()
 
     if not naam or not email or "@" not in email:
         return jsonify({"ok": False, "fout": "Naam of email ontbreekt"}), 400
 
-    print(f"AANMELDING: {naam} | {email} | {pakket}")
+    print(f"AANMELDING: {naam} | {email} | {pakket} | {datetime.now().strftime('%d-%m-%Y %H:%M')}")
 
-    stuur_notificatie(naam, email, pakket)
-    stuur_welkomstmail(naam, email, pakket)
+    # Notificatie naar Nick
+    stuur_mail(
+        NOTIF_EMAIL,
+        f"Nieuwe aanmelding SubsidieAlert: {naam}",
+        f"Naam:   {naam}\nEmail:  {email}\nPakket: {pakket}\nDatum:  {datetime.now().strftime('%d-%m-%Y %H:%M')}"
+    )
+
+    # Welkomstmail naar aanmelder
+    stuur_mail(
+        email,
+        f"Welkom bij SubsidieAlert, {naam.split()[0]}!",
+        f"Hallo {naam},\n\nWelkom bij SubsidieAlert! Je gratis proefperiode van 14 dagen is gestart.\n\nElke ochtend voor 08:00 ontvang je nieuwe subsidies en aanbestedingen.\n\nPakket: {pakket.upper()}\n\nGroet,\nNick\nSubsidieAlert\nwww.subsidiealert.nl"
+    )
 
     return jsonify({"ok": True, "bericht": "Aanmelding ontvangen"})
 
-@app.route("/", methods=["GET"])
-def home():
-    return "SubsidieAlert Webhook API — actief"
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5055)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
