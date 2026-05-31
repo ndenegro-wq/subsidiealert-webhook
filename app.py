@@ -1,4 +1,4 @@
-import os, smtplib
+import os, smtplib, threading
 from datetime import datetime
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify
@@ -50,21 +50,23 @@ def aanmelding():
     if not naam or not email or "@" not in email:
         return jsonify({"ok": False, "fout": "Naam of email ontbreekt"}), 400
 
-    print(f"AANMELDING: {naam} | {email} | {pakket} | {datetime.now().strftime('%d-%m-%Y %H:%M')}")
+    datum = datetime.now().strftime('%d-%m-%Y %H:%M')
+    print(f"AANMELDING: {naam} | {email} | {pakket} | {datum}")
 
-    # Notificatie naar Nick
-    stuur_mail(
-        NOTIF_EMAIL,
-        f"Nieuwe aanmelding SubsidieAlert: {naam}",
-        f"Naam:   {naam}\nEmail:  {email}\nPakket: {pakket}\nDatum:  {datetime.now().strftime('%d-%m-%Y %H:%M')}"
-    )
+    # Mails versturen in achtergrond zodat response direct terugkomt
+    def verstuur_mails():
+        stuur_mail(
+            NOTIF_EMAIL,
+            f"Nieuwe aanmelding SubsidieAlert: {naam}",
+            f"Naam:   {naam}\nEmail:  {email}\nPakket: {pakket}\nDatum:  {datum}"
+        )
+        stuur_mail(
+            email,
+            f"Welkom bij SubsidieAlert, {naam.split()[0]}!",
+            f"Hallo {naam},\n\nWelkom bij SubsidieAlert! Je gratis proefperiode van 14 dagen is gestart.\n\nElke ochtend voor 08:00 ontvang je nieuwe subsidies en aanbestedingen.\n\nPakket: {pakket.upper()}\n\nGroet,\nNick\nSubsidieAlert\nwww.subsidiealert.nl"
+        )
 
-    # Welkomstmail naar aanmelder
-    stuur_mail(
-        email,
-        f"Welkom bij SubsidieAlert, {naam.split()[0]}!",
-        f"Hallo {naam},\n\nWelkom bij SubsidieAlert! Je gratis proefperiode van 14 dagen is gestart.\n\nElke ochtend voor 08:00 ontvang je nieuwe subsidies en aanbestedingen.\n\nPakket: {pakket.upper()}\n\nGroet,\nNick\nSubsidieAlert\nwww.subsidiealert.nl"
-    )
+    threading.Thread(target=verstuur_mails, daemon=True).start()
 
     return jsonify({"ok": True, "bericht": "Aanmelding ontvangen"})
 
