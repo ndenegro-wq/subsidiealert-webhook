@@ -44,17 +44,26 @@ def stuur_bevestiging(naam, email, pakket, telefoon):
       <div style="padding:32px;background:#fff;">
         <h2 style="color:#1a3a6e;margin-top:0;">Bedankt voor je aanmelding, {voornaam}!</h2>
         <p style="color:#444;line-height:1.7;">
-          We hebben je aanmelding ontvangen. Nick neemt <strong>binnen 1 werkdag</strong> persoonlijk contact met je op.
+          Geweldig dat je erbij bent! Om jouw persoonlijke subsidie-alerts zo goed mogelijk af te stemmen,
+          hebben we nog een paar gegevens van je nodig. <strong>Beantwoord deze mail</strong> met de onderstaande informatie:
+        </p>
+        <div style="background:#f0f7ff;border-left:4px solid #1a3a6e;padding:16px;margin:20px 0;border-radius:4px;">
+          <strong style="color:#1a3a6e;">Vul dit in en stuur terug:</strong><br><br>
+          1. <strong>Bedrijfsnaam:</strong> ...<br>
+          2. <strong>Sector / branche:</strong> (bijv. bouw, zorg, tech, horeca) ...<br>
+          3. <strong>Postcode:</strong> ...<br>
+          4. <strong>Aantal medewerkers:</strong> ...<br>
+          5. <strong>Waar ben je naar op zoek?</strong> (bijv. innovatie, verduurzaming, groei) ...
+        </div>
+        <p style="color:#444;line-height:1.7;">
+          Zodra we dit ontvangen, stellen we jouw profiel in en ontvang je elke ochtend voor 08:00
+          een persoonlijk overzicht van subsidies en aanbestedingen die bij jouw bedrijf passen.
         </p>
         <div style="background:#f0f7ff;border-left:4px solid #1a3a6e;padding:16px;margin:20px 0;border-radius:4px;">
           <strong style="color:#1a3a6e;">Jouw aanmelding</strong><br><br>
           Pakket: <strong>{pakket.upper()}</strong> &mdash; {prijs}<br>
           Datum: {datetime.now().strftime('%d %B %Y om %H:%M')}
         </div>
-        <p style="color:#444;line-height:1.7;">
-          Elke ochtend voor 08:00 ontvang je een persoonlijk overzicht van nieuwe subsidies en aanbestedingen passend bij jouw bedrijf.
-        </p>
-        <p style="color:#444;">Vragen? Antwoord gewoon op deze mail.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
         <p style="color:#999;font-size:12px;margin:0;">
           SubsidieAlert &bull; <a href="https://www.subsidiealert.nl" style="color:#1a3a6e;">www.subsidiealert.nl</a>
@@ -66,15 +75,22 @@ def stuur_bevestiging(naam, email, pakket, telefoon):
 
 Bedankt voor je aanmelding bij SubsidieAlert!
 
+Om jouw alerts goed af te stemmen, hebben we nog wat gegevens nodig.
+Beantwoord deze mail met het volgende:
+
+1. Bedrijfsnaam: ...
+2. Sector / branche: (bijv. bouw, zorg, tech, horeca) ...
+3. Postcode: ...
+4. Aantal medewerkers: ...
+5. Waar ben je naar op zoek? (bijv. innovatie, verduurzaming, groei) ...
+
+Zodra we dit ontvangen, stellen we jouw profiel in en ontvang je elke ochtend voor 08:00
+een persoonlijk overzicht van subsidies die bij jouw bedrijf passen.
+
 Pakket: {pakket.upper()} — {prijs}
 Datum:  {datetime.now().strftime('%d-%m-%Y %H:%M')}
 
-Nick neemt binnen 1 werkdag contact met je op.
-
-Vragen? Antwoord op deze mail.
-
 Met vriendelijke groet,
-Nick de Negro
 SubsidieAlert — www.subsidiealert.nl"""
 
     stuur_mail(email, f"Bevestiging aanmelding SubsidieAlert — {pakket.upper()}", html, tekst)
